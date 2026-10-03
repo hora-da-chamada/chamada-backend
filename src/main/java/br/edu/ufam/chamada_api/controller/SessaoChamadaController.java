@@ -1,11 +1,14 @@
 package br.edu.ufam.chamada_api.controller;
 
-import br.edu.ufam.chamada_api.domain.SessaoChamada;
+import br.edu.ufam.chamada_api.dto.SessaoChamadaResponseDTO;
 import br.edu.ufam.chamada_api.service.SessaoChamadaService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.security.Principal;
 import java.util.UUID;
 
 @RestController
@@ -18,15 +21,17 @@ public class SessaoChamadaController {
         this.service = service;
     }
 
-    public record AbrirSessaoRequest(UUID professorId, String nomeDisciplina) {}
+    public record AbrirSessaoRequest(String nomeDisciplina) {}
+
     @PostMapping
-    public ResponseEntity<SessaoChamada> abrirSessao(@RequestBody AbrirSessaoRequest request) {
-        SessaoChamada novaSessao = service.abrirSessao(request.professorId(), request.nomeDisciplina());
+    public ResponseEntity<SessaoChamadaResponseDTO> abrirSessao(@RequestBody AbrirSessaoRequest request, Principal principal) {
+        UUID professorId = UUID.fromString(principal.getName());
+        SessaoChamadaResponseDTO novaSessao = service.abrirSessao(professorId, request.nomeDisciplina());
         return ResponseEntity.ok(novaSessao);
     }
 
     @GetMapping("/ativas")
-    public ResponseEntity<List<SessaoChamada>> listarAtivas() {
-        return ResponseEntity.ok(service.listarSessoesAtivas());
+    public ResponseEntity<Page<SessaoChamadaResponseDTO>> listarAtivas(@PageableDefault(size = 20) Pageable pageable) {
+        return ResponseEntity.ok(service.listarSessoesAtivas(pageable));
     }
 }

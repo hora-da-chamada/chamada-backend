@@ -3,10 +3,12 @@ package br.edu.ufam.chamada_api.service;
 import br.edu.ufam.chamada_api.domain.Presenca;
 import br.edu.ufam.chamada_api.domain.SessaoChamada;
 import br.edu.ufam.chamada_api.domain.Usuario;
+import br.edu.ufam.chamada_api.dto.PresencaResponseDTO;
 import br.edu.ufam.chamada_api.repository.PresencaRepository;
 import br.edu.ufam.chamada_api.repository.SessaoChamadaRepository;
 import br.edu.ufam.chamada_api.repository.UsuarioRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -26,7 +28,8 @@ public class PresencaService {
         this.usuarioRepository = usuarioRepository;
     }
 
-    public Presenca registrarPresenca(UUID sessaoId, UUID alunoId) {
+    @Transactional
+    public PresencaResponseDTO registrarPresenca(UUID sessaoId, UUID alunoId) {
         SessaoChamada sessao = sessaoRepository.findById(sessaoId)
                 .orElseThrow(() -> new RuntimeException("Sessão não encontrada"));
 
@@ -44,11 +47,13 @@ public class PresencaService {
         if (presencaRepository.existsBySessaoIdAndAlunoId(sessaoId, alunoId)) {
             throw new RuntimeException("Presença já registrada para este aluno nesta sessão");
         }
+
         Presenca presenca = new Presenca();
         presenca.setSessao(sessao);
         presenca.setAluno(aluno);
         presenca.setDataHoraRegistro(LocalDateTime.now());
 
-        return presencaRepository.save(presenca);
+        Presenca presencaSalva = presencaRepository.save(presenca);
+        return PresencaResponseDTO.fromEntity(presencaSalva);
     }
 }
